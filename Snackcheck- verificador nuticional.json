@@ -1,0 +1,539 @@
+{
+  "name": "Snackcheck- verificador nuticional",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "nutrition-check",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "30421af3-c52d-4ea8-a432-8c5101f4002a",
+      "name": "Webhook",
+      "webhookId": "f0bbf503-ee40-489e-ac00-7541f7a0b97b"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "96d8ef25-2bf6-4ccb-b8ad-a4c62ea04595",
+              "leftValue": "={{  $json.body.barcode }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        224,
+        0
+      ],
+      "id": "186f0308-49e6-47f5-9808-6abfe8d4dcbd",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"service\": \"SnackCheck API\",\n  \"description\": \"Envía un código de barras por POST para evaluar el perfil nutricional.\",\n  \"usage\": {\n    \"method\": \"POST\",\n    \"endpoint\": \"/nutrition-check\",\n    \"body\": { \"barcode\": \"3017620422003\" }\n  }\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        448,
+        -96
+      ],
+      "id": "e067d870-f5b8-485e-af7d-7c997259eb4d",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "25586d5a-7b70-4b8f-954f-5eccd7ffc072",
+              "leftValue": "={{ String($json.body.barcode).trim() }}",
+              "rightValue": "^\\d{8,14}$",
+              "operator": {
+                "type": "string",
+                "operation": "regex"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        448,
+        96
+      ],
+      "id": "dbe5c655-a5a6-468b-8629-e907b4d3f12d",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"error\": \"Formato de codigo de barras invalido. Debe tener entre 8 y 14 digitos numericos.\",\n  \"example\": { \"barcode\": \"3017620422003\" }\n}\n",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        576,
+        192
+      ],
+      "id": "6eb4ef4b-4c0b-45b7-9f0a-cf7dea90f857",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {
+        "url": "=3.  \t• https://openfoodfacts.org{{ String($json.body.barcode).trim() }}.json?fields=product_name,brands,nutriscore_grade,nutrient_levels,nutriments",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        672,
+        0
+      ],
+      "id": "75c71eb5-f5a1-4ab3-98e1-4430604c1852",
+      "name": "HTTP Request",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "a3e462dd-0c18-4b97-aa2d-e9912b241390",
+              "leftValue": "={{  $json.status }}",
+              "rightValue": "1",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        896,
+        0
+      ],
+      "id": "00065683-7834-4d3c-9b0c-56d622d59de2",
+      "name": "If2"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"error\": \"Producto no encontrado en Open Food Facts.\",\n  \"example\": { \"barcode\": \"3017620422003\" }\n}\n",
+        "options": {
+          "responseCode": 404
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1024,
+        96
+      ],
+      "id": "9bc57f17-e590-402f-a587-0ee0817098b4",
+      "name": "Respond to Webhook2"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "22aee796-1d9e-40c8-95e2-d98868004d62",
+              "name": "product_name",
+              "value": "={{ $json.product.product_name || 'Producto sin nombre' }}",
+              "type": "string"
+            },
+            {
+              "id": "13bc66d1-d289-4762-a18e-1af1ce9ec433",
+              "name": "nutriscore_grade",
+              "value": "={{ ($json.product.nutriscore_grade || 'unknown').toLowerCase() }}",
+              "type": "string"
+            },
+            {
+              "id": "fee38b29-9683-435c-b3a5-e6ac2c226ffa",
+              "name": "sugars_level",
+              "value": "={{ $json.product.nutrient_levels?.sugars || 'unknown' }}",
+              "type": "string"
+            },
+            {
+              "id": "d172f5e7-bec4-4c89-9971-aa92d854df6f",
+              "name": "salt_level",
+              "value": "={{ $json.product.nutrient_levels?.salt || 'unknown' }}",
+              "type": "string"
+            },
+            {
+              "id": "c78f3461-4128-47e3-9387-b04def65fddb",
+              "name": "fat_level",
+              "value": "={{ $json.product.nutrient_levels?.fat || 'unknown' }}",
+              "type": "string"
+            },
+            {
+              "id": "2330fbcb-eae4-4a8c-b70a-b1f71ae4e1c3",
+              "name": "energy_kcal_100g",
+              "value": "={{ $json.product.nutriments?.['energy-kcal_100g'] ?? null }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1136,
+        -112
+      ],
+      "id": "b133fc38-85bb-4640-b990-3e6de69beb40",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "509f8b8b-9c79-4202-8cc2-13b30f1375c2",
+              "leftValue": "={{ $json.nutriscore_grade }}",
+              "rightValue": "unknown",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "66d6d76b-be55-4a8d-87dc-276045851c70",
+              "leftValue": "={{ $json.sugars_level }}",
+              "rightValue": "unknown",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "64157c6b-d725-4b92-be9f-3ef40ca28b5e",
+              "leftValue": "={{ $json.salt_level }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "b66aeddf-277b-4542-80c7-7f0c5555b430",
+              "leftValue": "={{ $json.fat_level }}",
+              "rightValue": "unknown",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        1312,
+        -112
+      ],
+      "id": "8add7ebb-6284-4206-b34c-42dfa2b75982",
+      "name": "If3"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"status\": \"insufficient_data\",\n  \"product\": \"{{ $json.product_name }}\",\n  \"message\": \"Datos nutricionales insuficientes para emitir un veredicto.\"\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        2528,
+        336
+      ],
+      "id": "363c5986-7c25-47a9-bfb2-249e4aad87c6",
+      "name": "Respond to Webhook3"
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\nconst ns = item.nutriscore_grade;\nconst levels = [item.sugars_level, item.salt_level, item.fat_level];\n\n// Puntuación de preocupación (0-3) según nutrientes en nivel \"high\"\nlet concernScore = 0;\nif (item.sugars_level === 'high') concernScore++;\nif (item.salt_level === 'high') concernScore++;\nif (item.fat_level === 'high') concernScore++;\n\nconst hasSemaphore = levels.some(l => l && l !== 'unknown');\nconst hasNutriScore = ['a', 'b', 'c', 'd', 'e'].includes(ns);\n\n// Clasificación por semáforo\nlet semClass = 'moderado';\nif (concernScore === 0) semClass = 'saludable';\nelse if (concernScore === 1) semClass = 'moderado';\nelse semClass = 'poco saludable';\n\n// Clasificación por Nutri-Score\nlet nsClass = 'moderado';\nif (ns === 'a' || ns === 'b') nsClass = 'saludable';\nelse if (ns === 'c') nsClass = 'moderado';\nelse if (ns === 'd' || ns === 'e') nsClass = 'poco saludable';\n\n// Peor de los dos (semáforo solo si falta Nutri-Score; o el más estricto entre ambos)\nconst rank = { 'saludable': 1, 'moderado': 2, 'poco saludable': 3 };\nlet finalClass = semClass;\n\nif (!hasNutriScore) {\n  finalClass = semClass;\n} else if (!hasSemaphore) {\n  finalClass = nsClass;\n} else {\n  finalClass = rank[nsClass] >= rank[semClass] ? nsClass : semClass;\n}\n\nreturn [{\n  json: {\n    ...item,\n    concern_score: concernScore,\n    classification: finalClass\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1488,
+        48
+      ],
+      "id": "6bb6264a-aab0-4121-b6ea-e6badef40574",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Eres un asistente nutricional amable y claro. Evalúa este producto en español en un párrafo breve (3-4 oraciones) y directo, sin usar markdown ni listas:\n- Producto: {{ $json.product_name }}\n- Clasificación: {{ $json.classification }}\n- Nutri-Score: {{ $json.nutriscore_grade }}\n- Azúcares: {{ $json.sugars_level }}, Sal: {{ $json.salt_level }}, Grasas: {{ $json.fat_level }}\n- Calorías (100g): {{ $json.energy_kcal_100g }} kcal\n\nInstrucciones de tono:\n- Si es \"saludable\", da un mensaje alentador destacando sus puntos positivos.\n- Si es \"moderado\", da un consejo equilibrado sobre consumirlo con moderación.\n- Si es \"poco saludable\", da una advertencia clara y cautelosa explicando qué nutrientes altos o Nutri-Score preocupan.\n",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        1664,
+        208
+      ],
+      "id": "ffc16bf5-caba-4b27-a4fb-df742feb9698",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        1360,
+        384
+      ],
+      "id": "d750f8b7-de46-4fba-8550-b7b4432839e7",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "lnHHqUPRZbqLXnIr",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.text }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1968,
+        352
+      ],
+      "id": "bef043a7-7af3-47d6-bedb-1b33b3425834",
+      "name": "Respond to Webhook4"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "If2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If2": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        []
+      ]
+    },
+    "If3": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook3",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond to Webhook3": {
+      "main": [
+        [
+          {
+            "node": "If3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "8c2d0e30-00c4-4572-a625-f5af5200906a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "461d6518249cfec8e1f3d4e99ac33702a944046e1bb7a13b67fea8d606d5a474"
+  },
+  "nodeGroups": [],
+  "id": "ykNrWWNOZPxigHLI",
+  "tags": []
+}
